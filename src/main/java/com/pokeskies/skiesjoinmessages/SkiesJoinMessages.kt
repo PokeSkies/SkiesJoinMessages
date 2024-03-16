@@ -79,20 +79,24 @@ class SkiesJoinMessages : ModInitializer {
 
     private fun playerLogin(player: ServerPlayer) {
         for ((id, group) in ConfigManager.CONFIG.groups) {
-            if (group.permission.isEmpty() || Permissions.check(player, group.permission)) {
+            Utils.printDebug("Player Login - Checking player '${player.name.string}' for permission '${group.permission}' from group '${id}', result=${Permissions.check(player, group.permission)}")
+            if (group.permission.isEmpty() || Permissions.check(player, group.permission, 1)) {
                 group.joinMessage.forEach { message ->
                     adventure.all().sendMessage(Utils.deserializeText(Utils.parsePlaceholders(player, message)))
                 }
+                break
             }
         }
     }
 
     private fun playerLogout(player: ServerPlayer) {
         for ((id, group) in ConfigManager.CONFIG.groups) {
+            Utils.printDebug("Player Logout - Checking player '${player.name.string}' for permission '${group.permission}' from group '${id}', result=${Permissions.check(player, group.permission)}")
             if (group.permission.isEmpty() || Permissions.check(player, group.permission)) {
                 group.leaveMessage.forEach { message ->
                     adventure.all().sendMessage(Utils.deserializeText(Utils.parsePlaceholders(player, message)))
                 }
+                break
             }
         }
     }
