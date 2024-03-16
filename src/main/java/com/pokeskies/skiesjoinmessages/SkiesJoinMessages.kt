@@ -37,7 +37,7 @@ class SkiesJoinMessages : ModInitializer {
 
     lateinit var placeholderManager: PlaceholderManager
 
-    var adventure: FabricServerAudiences? = null
+    lateinit var adventure: FabricServerAudiences
     var server: MinecraftServer? = null
 
 
@@ -83,6 +83,9 @@ class SkiesJoinMessages : ModInitializer {
     private fun playerLogin(player: ServerPlayer) {
         for ((id, group) in ConfigManager.CONFIG.groups) {
             if (group.permission.isEmpty() || Permissions.check(player, group.permission)) {
+                group.joinMessage.forEach { message ->
+                    adventure.all().sendMessage(Utils.deserializeText(Utils.parsePlaceholders(player, message)))
+                }
             }
         }
     }
@@ -90,7 +93,9 @@ class SkiesJoinMessages : ModInitializer {
     private fun playerLogout(player: ServerPlayer) {
         for ((id, group) in ConfigManager.CONFIG.groups) {
             if (group.permission.isEmpty() || Permissions.check(player, group.permission)) {
-
+                group.leaveMessage.forEach { message ->
+                    adventure.all().sendMessage(Utils.deserializeText(Utils.parsePlaceholders(player, message)))
+                }
             }
         }
     }
