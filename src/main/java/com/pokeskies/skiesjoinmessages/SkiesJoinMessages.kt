@@ -59,9 +59,6 @@ class SkiesJoinMessages : ModInitializer {
             )
             this.server = server
         })
-        ServerLifecycleEvents.SERVER_STOPPED.register(ServerStopped { server: MinecraftServer? ->
-            this.adventure = null
-        })
         CommandRegistrationCallback.EVENT.register { dispatcher, _, _ ->
             BaseCommand().register(
                 dispatcher
