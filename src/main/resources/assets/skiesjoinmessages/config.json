@@ -1,0 +1,19 @@
+{
+  "debug": false,
+  "suppressed_messages": [
+    "multiplayer.player.joined",
+    "multiplayer.player.left",
+    "multiplayer.player.joined.renamed"
+  ],
+  "groups": {
+    "example": {
+      "permission": "test.permission",
+      "join_message": [
+        "<red>VIP %player% joined the game!"
+      ],
+      "leave_message": [
+        "<red>VIP %player% left the game!"
+      ]
+    }
+  }
+}
