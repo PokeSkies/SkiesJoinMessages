@@ -12,7 +12,6 @@ import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.ServerStarting
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.ServerStopped
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents
 import net.fabricmc.loader.api.FabricLoader
 import net.kyori.adventure.platform.fabric.FabricServerAudiences
@@ -65,9 +64,6 @@ class SkiesJoinMessages : ModInitializer {
             )
         }
 
-        ServerPlayConnectionEvents.JOIN.register { handler, _, _ ->
-            playerLogin(handler.player)
-        }
         ServerPlayConnectionEvents.DISCONNECT.register { handler, _ ->
             playerLogout(handler.player)
         }
@@ -77,7 +73,7 @@ class SkiesJoinMessages : ModInitializer {
         this.configManager.reload()
     }
 
-    private fun playerLogin(player: ServerPlayer) {
+    fun playerLogin(player: ServerPlayer) {
         for ((id, group) in ConfigManager.CONFIG.groups) {
             Utils.printDebug("Player Login - Checking player '${player.name.string}' for permission '${group.permission}' from group '${id}', result=${Permissions.check(player, group.permission)}")
             if (group.permission.isEmpty() || Permissions.check(player, group.permission, 1)) {
@@ -89,7 +85,7 @@ class SkiesJoinMessages : ModInitializer {
         }
     }
 
-    private fun playerLogout(player: ServerPlayer) {
+    fun playerLogout(player: ServerPlayer) {
         for ((id, group) in ConfigManager.CONFIG.groups) {
             Utils.printDebug("Player Logout - Checking player '${player.name.string}' for permission '${group.permission}' from group '${id}', result=${Permissions.check(player, group.permission)}")
             if (group.permission.isEmpty() || Permissions.check(player, group.permission)) {

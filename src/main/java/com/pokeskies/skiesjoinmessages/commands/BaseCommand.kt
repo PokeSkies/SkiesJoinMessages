@@ -2,7 +2,8 @@ package com.pokeskies.skiesjoinmessages.commands
 
 import com.mojang.brigadier.CommandDispatcher
 import com.mojang.brigadier.tree.LiteralCommandNode
-import com.pokeskies.skiesjoinmessages.commands.subcommands.*
+import com.pokeskies.skiesjoinmessages.commands.subcommands.DebugCommand
+import com.pokeskies.skiesjoinmessages.commands.subcommands.ReloadCommand
 import me.lucko.fabric.api.permissions.v0.Permissions
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.Commands

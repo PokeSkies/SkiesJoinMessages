@@ -1,7 +1,9 @@
 package com.pokeskies.skiesjoinmessages.mixin;
 
+import com.pokeskies.skiesjoinmessages.SkiesJoinMessages;
 import com.pokeskies.skiesjoinmessages.config.ConfigManager;
 import com.pokeskies.skiesjoinmessages.utils.Utils;
+import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.server.level.ServerPlayer;
@@ -16,12 +18,17 @@ import java.util.function.Function;
 @Mixin(PlayerList.class)
 public class PlayerListMixin {
     @Inject(method = "broadcastSystemMessage(Lnet/minecraft/network/chat/Component;Ljava/util/function/Function;Z)V", at = @At("HEAD"), cancellable = true)
-    public void broadcastSystemMessage(Component serverMessage, Function<ServerPlayer, Component> playerMessageFactory, boolean bypassHiddenChat, CallbackInfo ci) {
+    public void skiesjoinmessages$broadcastSystemMessage(Component serverMessage, Function<ServerPlayer, Component> playerMessageFactory, boolean bypassHiddenChat, CallbackInfo ci) {
         if (serverMessage.getContents() instanceof TranslatableContents translated) {
             if (ConfigManager.CONFIG.getSuppressedMessages().contains(translated.getKey())) {
                 Utils.INSTANCE.printDebug("Suppressing message: " + translated.getKey(), false);
                 ci.cancel();
             }
         }
+    }
+
+    @Inject(method = "placeNewPlayer", at = @At("TAIL"))
+    public void skiesjoinmessages$placeNewPlayer(Connection netManager, ServerPlayer player, CallbackInfo ci) {
+        SkiesJoinMessages.INSTANCE.playerLogin(player);
     }
 }
