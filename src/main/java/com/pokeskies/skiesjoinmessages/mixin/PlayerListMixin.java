@@ -7,6 +7,7 @@ import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.players.PlayerList;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -28,7 +29,7 @@ public class PlayerListMixin {
     }
 
     @Inject(method = "placeNewPlayer", at = @At("TAIL"))
-    public void skiesjoinmessages$placeNewPlayer(Connection netManager, ServerPlayer player, CallbackInfo ci) {
+    public void skiesjoinmessages$placeNewPlayer(Connection connection, ServerPlayer player, CommonListenerCookie cookie, CallbackInfo ci) {
         SkiesJoinMessages.INSTANCE.playerLogin(player);
     }
 }
