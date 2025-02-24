@@ -17,7 +17,24 @@
     }
   },
   "storage": {
-    "type": "json"
+    "type": "json",
+    "host": "localhost",
+    "port": 27017,
+    "database":  "skiesjoinmessages",
+    "username": "root",
+    "password": "",
+    "properties": {
+      "useUnicode": true,
+      "characterEncoding": "utf8"
+    },
+    "pool_settings": {
+      "maxiumum_pool_size": 10,
+      "minimum_idle": 10,
+      "keep_alive_time": 0,
+      "connection_timeout": 30000,
+      "idle_timeout": 600000,
+      "max_lifetime": 1800000
+    }
   },
   "first_join": {
     "mode": "STORAGE",
