@@ -85,27 +85,11 @@ class SkiesJoinMessages : ModInitializer {
 
     fun handleLogin(player: ServerPlayer) {
         // First join stuff. This will return if a valid first join player is found, otherwise continue on
-        ConfigManager.CONFIG.firstJoin?.let { firstJoinConfig ->
-            if (firstJoinConfig.mode == FirstJoinConfig.Mode.STORAGE) {
-                if (storage != null) {
-                    if (!storage!!.hasUser(player.uuid)) {
-                        storage!!.addUser(player.uuid, System.currentTimeMillis())
-                        firstJoinConfig.message.forEach { message ->
-                            adventure.all().sendMessage(Utils.deserializeText(Utils.parsePlaceholders(player, message)))
-                        }
-                        return
-                    }
-                } else {
-                    Utils.printError("Storage is null, but First Join is set to STORAGE mode! Cannot check if player is new...")
-                }
-            } else {
-                if (player.stats.getValue(Stats.CUSTOM.get(Stats.PLAY_TIME)) == 0) {
-                    firstJoinConfig.message.forEach { message ->
-                        adventure.all().sendMessage(Utils.deserializeText(Utils.parsePlaceholders(player, message)))
-                    }
-                    return
-                }
+        if (isFirstJoin(player)) {
+            ConfigManager.CONFIG.firstJoin?.message?.forEach { message ->
+                adventure.all().sendMessage(Utils.deserializeText(Utils.parsePlaceholders(player, message)))
             }
+            return
         }
 
         for ((id, group) in ConfigManager.CONFIG.groups) {
@@ -131,11 +115,47 @@ class SkiesJoinMessages : ModInitializer {
         }
     }
 
+    private fun isFirstJoin(player: ServerPlayer): Boolean {
+        val firstJoinConfig = ConfigManager.CONFIG.firstJoin ?: return false
+        when (firstJoinConfig.mode) {
+            FirstJoinConfig.Mode.STATS -> {
+                if (player.stats.getValue(Stats.CUSTOM.get(Stats.PLAY_TIME)) <= 0) {
+                    return true
+                }
+            }
+            FirstJoinConfig.Mode.STORAGE -> {
+                if (storage != null) {
+                    if (!storage!!.hasUser(player.uuid)) {
+                        storage!!.addUser(player.uuid, System.currentTimeMillis())
+                        return true
+                    }
+                } else {
+                    Utils.printError("Storage is null, but First Join is set to STORAGE mode! Cannot properly check if player is new...")
+                }
+            }
+            FirstJoinConfig.Mode.HYBRID -> {
+                if (player.stats.getValue(Stats.CUSTOM.get(Stats.PLAY_TIME)) > 0) {
+                    if (storage != null) {
+                        storage!!.addUser(player.uuid, System.currentTimeMillis())
+                    }
+                    return false
+                }
+                if (storage != null) {
+                    if (!storage!!.hasUser(player.uuid)) {
+                        storage!!.addUser(player.uuid, System.currentTimeMillis())
+                        return true
+                    }
+                } else {
+                    Utils.printError("Storage is null, but First Join is set to HYBRID mode! Cannot properly check if player is new...")
+                }
+            }
+        }
+
+        return false
+    }
+
     fun getUniquePlayers(): Int? {
-        return if (ConfigManager.CONFIG.firstJoin != null && ConfigManager.CONFIG.firstJoin?.mode == FirstJoinConfig.Mode.STORAGE)
-            storage?.totalUsers()
-        else
-            null
+        return storage?.totalUsers()
     }
 
     fun <T : Any> loadFile(filename: String, default: T, create: Boolean = false): T {

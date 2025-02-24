@@ -10,7 +10,8 @@ class FirstJoinConfig(
 ) {
     enum class Mode(val identifier: String) {
         STORAGE("storage"),
-        STATS("stats");
+        STATS("stats"),
+        HYBRID("hybrid");
 
         companion object {
             fun valueOfAnyCase(identifier: String): Mode? {
