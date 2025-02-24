@@ -5,7 +5,10 @@ import com.google.gson.GsonBuilder
 import com.google.gson.stream.JsonReader
 import com.pokeskies.skiesjoinmessages.commands.BaseCommand
 import com.pokeskies.skiesjoinmessages.config.ConfigManager
+import com.pokeskies.skiesjoinmessages.config.FirstJoinConfig
 import com.pokeskies.skiesjoinmessages.placeholders.PlaceholderManager
+import com.pokeskies.skiesjoinmessages.storage.IStorage
+import com.pokeskies.skiesjoinmessages.storage.StorageType
 import com.pokeskies.skiesjoinmessages.utils.Utils
 import me.lucko.fabric.api.permissions.v0.Permissions
 import net.fabricmc.api.ModInitializer
@@ -17,6 +20,7 @@ import net.fabricmc.loader.api.FabricLoader
 import net.kyori.adventure.platform.fabric.FabricServerAudiences
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.level.ServerPlayer
+import net.minecraft.stats.Stats
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import java.io.File
@@ -37,10 +41,13 @@ class SkiesJoinMessages : ModInitializer {
     lateinit var placeholderManager: PlaceholderManager
 
     lateinit var adventure: FabricServerAudiences
-    var server: MinecraftServer? = null
+    lateinit var server: MinecraftServer
+    var storage: IStorage? = null
 
-
-    var gson: Gson = GsonBuilder().disableHtmlEscaping().create()
+    var gson: Gson = GsonBuilder().disableHtmlEscaping()
+        .registerTypeAdapter(StorageType::class.java, StorageType.StorageTypeAdaptor())
+        .registerTypeAdapter(FirstJoinConfig.Mode::class.java, FirstJoinConfig.Mode.FirstJoinModeAdaptor())
+        .create()
 
     var gsonPretty: Gson = gson.newBuilder().setPrettyPrinting().create()
 
@@ -49,6 +56,8 @@ class SkiesJoinMessages : ModInitializer {
 
         this.configDir = File(FabricLoader.getInstance().configDirectory, "skiesjoinmessages")
         this.configManager = ConfigManager(configDir)
+
+        this.storage = IStorage.load(ConfigManager.CONFIG.storage)
 
         this.placeholderManager = PlaceholderManager()
 
@@ -65,15 +74,24 @@ class SkiesJoinMessages : ModInitializer {
         }
 
         ServerPlayConnectionEvents.DISCONNECT.register { handler, _ ->
-            playerLogout(handler.player)
+            handleLogout(handler.player)
         }
     }
 
     fun reload() {
         this.configManager.reload()
+        this.storage = IStorage.load(ConfigManager.CONFIG.storage)
     }
 
-    fun playerLogin(player: ServerPlayer) {
+    fun handleLogin(player: ServerPlayer) {
+        // First join stuff. This will return if a valid first join player is found, otherwise continue on
+        if (isFirstJoin(player)) {
+            ConfigManager.CONFIG.firstJoin?.message?.forEach { message ->
+                adventure.all().sendMessage(Utils.deserializeText(Utils.parsePlaceholders(player, message)))
+            }
+            return
+        }
+
         for ((id, group) in ConfigManager.CONFIG.groups) {
             Utils.printDebug("Player Login - Checking player '${player.name.string}' for permission '${group.permission}' from group '${id}', result=${Permissions.check(player, group.permission)}")
             if (group.permission.isEmpty() || Permissions.check(player, group.permission, 1)) {
@@ -85,7 +103,7 @@ class SkiesJoinMessages : ModInitializer {
         }
     }
 
-    fun playerLogout(player: ServerPlayer) {
+    fun handleLogout(player: ServerPlayer) {
         for ((id, group) in ConfigManager.CONFIG.groups) {
             Utils.printDebug("Player Logout - Checking player '${player.name.string}' for permission '${group.permission}' from group '${id}', result=${Permissions.check(player, group.permission)}")
             if (group.permission.isEmpty() || Permissions.check(player, group.permission)) {
@@ -95,6 +113,49 @@ class SkiesJoinMessages : ModInitializer {
                 break
             }
         }
+    }
+
+    private fun isFirstJoin(player: ServerPlayer): Boolean {
+        val firstJoinConfig = ConfigManager.CONFIG.firstJoin ?: return false
+        when (firstJoinConfig.mode) {
+            FirstJoinConfig.Mode.STATS -> {
+                if (player.stats.getValue(Stats.CUSTOM.get(Stats.PLAY_TIME)) <= 0) {
+                    return true
+                }
+            }
+            FirstJoinConfig.Mode.STORAGE -> {
+                if (storage != null) {
+                    if (!storage!!.hasUser(player.uuid)) {
+                        storage!!.addUser(player.uuid, System.currentTimeMillis())
+                        return true
+                    }
+                } else {
+                    Utils.printError("Storage is null, but First Join is set to STORAGE mode! Cannot properly check if player is new...")
+                }
+            }
+            FirstJoinConfig.Mode.HYBRID -> {
+                if (player.stats.getValue(Stats.CUSTOM.get(Stats.PLAY_TIME)) > 0) {
+                    if (storage != null) {
+                        storage!!.addUser(player.uuid, System.currentTimeMillis())
+                    }
+                    return false
+                }
+                if (storage != null) {
+                    if (!storage!!.hasUser(player.uuid)) {
+                        storage!!.addUser(player.uuid, System.currentTimeMillis())
+                        return true
+                    }
+                } else {
+                    Utils.printError("Storage is null, but First Join is set to HYBRID mode! Cannot properly check if player is new...")
+                }
+            }
+        }
+
+        return false
+    }
+
+    fun getUniquePlayers(): Int? {
+        return storage?.totalUsers()
     }
 
     fun <T : Any> loadFile(filename: String, default: T, create: Boolean = false): T {

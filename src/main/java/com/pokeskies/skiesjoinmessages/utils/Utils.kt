@@ -14,7 +14,6 @@ import net.minecraft.server.level.ServerPlayer
 import java.lang.reflect.Type
 import java.util.function.Function
 
-
 object Utils {
     val miniMessage: MiniMessage = MiniMessage.miniMessage()
 
@@ -23,7 +22,7 @@ object Utils {
     }
 
     fun deserializeText(text: String): Component {
-        return SkiesJoinMessages.INSTANCE.adventure!!.toNative(miniMessage.deserialize(text))
+        return SkiesJoinMessages.INSTANCE.adventure.toNative(miniMessage.deserialize(text))
     }
 
     fun printDebug(message: String?, bypassCheck: Boolean = false) {
@@ -79,7 +78,7 @@ object Utils {
         @Throws(JsonParseException::class)
         override fun deserialize(json: JsonElement?, typeOfT: Type?, context: JsonDeserializationContext?): T? {
             return try {
-                codec.decode(JsonOps.INSTANCE, json).getOrThrow(false) { }.first
+                codec.decode(JsonOps.INSTANCE, json).orThrow.first
             } catch (e: Throwable) {
                 printError("There was an error while deserializing a Codec: $codec")
                 null
@@ -89,7 +88,7 @@ object Utils {
         override fun serialize(src: T?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement {
             return try {
                 if (src != null)
-                    codec.encodeStart(JsonOps.INSTANCE, src).getOrThrow(false) { }
+                    codec.encodeStart(JsonOps.INSTANCE, src).orThrow
                 else
                     JsonNull.INSTANCE
             } catch (e: Throwable) {
