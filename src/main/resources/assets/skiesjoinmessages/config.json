@@ -15,5 +15,14 @@
         "<red>VIP %player% left the game!"
       ]
     }
+  },
+  "storage": {
+    "type": "json"
+  },
+  "first_join": {
+    "mode": "STORAGE",
+    "message": [
+      "<red>Welcome %player% to the server! <gray>(#%unique_players%)"
+    ]
   }
 }

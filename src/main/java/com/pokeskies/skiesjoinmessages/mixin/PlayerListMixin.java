@@ -30,6 +30,6 @@ public class PlayerListMixin {
 
     @Inject(method = "placeNewPlayer", at = @At("TAIL"))
     public void skiesjoinmessages$placeNewPlayer(Connection connection, ServerPlayer player, CommonListenerCookie cookie, CallbackInfo ci) {
-        SkiesJoinMessages.INSTANCE.playerLogin(player);
+        SkiesJoinMessages.INSTANCE.handleLogin(player);
     }
 }

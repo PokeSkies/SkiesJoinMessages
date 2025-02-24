@@ -22,7 +22,7 @@ object Utils {
     }
 
     fun deserializeText(text: String): Component {
-        return SkiesJoinMessages.INSTANCE.adventure!!.toNative(miniMessage.deserialize(text))
+        return SkiesJoinMessages.INSTANCE.adventure.toNative(miniMessage.deserialize(text))
     }
 
     fun printDebug(message: String?, bypassCheck: Boolean = false) {
